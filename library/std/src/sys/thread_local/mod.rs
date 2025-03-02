@@ -132,7 +132,7 @@ pub(crate) mod key {
     cfg_if::cfg_if! {
         if #[cfg(any(
             all(
-                not(target_vendor = "apple"),
+                all(not(target_thread_local), target_vendor = "apple"),
                 not(target_family = "wasm"),
                 target_family = "unix",
             ),

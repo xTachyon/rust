@@ -135,6 +135,9 @@ unsafe extern "C" fn destroy_value<T: 'static>(ptr: *mut u8) {
     abort_on_dtor_unwind(|| {
         let ptr = unsafe { Box::from_raw(ptr as *mut Value<T>) };
         let key = ptr.key;
+        unsafe {
+            crate::libc::printf("destroy_value: %u\n\0".as_ptr().cast(), key);
+        }
         // SAFETY: `key` is the TLS key `ptr` was stored under.
         unsafe { set(key, ptr::without_provenance_mut(1)) };
         drop(ptr);

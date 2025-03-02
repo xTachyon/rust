@@ -127,7 +127,7 @@ pub(crate) fn base(
         archive_format: "darwin".into(),
         // Thread locals became available with iOS 8 and macOS 10.7,
         // and both are far below our minimum.
-        has_thread_local: true,
+        has_thread_local: false,
         abi_return_struct_as_int: true,
         emit_debug_gdb_scripts: false,
         eh_frame_header: false,

@@ -26,23 +26,50 @@ pub type Key = libc::pthread_key_t;
 pub fn create(dtor: Option<unsafe extern "C" fn(*mut u8)>) -> Key {
     let mut key = 0;
     assert_eq!(unsafe { libc::pthread_key_create(&mut key, mem::transmute(dtor)) }, 0);
+    unsafe {
+        libc::printf("create key=%u dtor=%p\n\0".as_ptr().cast(), key, dtor);
+    };
     key
 }
 
 #[inline]
+#[allow(fuzzy_provenance_casts)]
 pub unsafe fn set(key: Key, value: *mut u8) {
-    let r = unsafe { libc::pthread_setspecific(key, value as *mut _) };
-    debug_assert_eq!(r, 0);
+    unsafe {
+        let s = libc::pthread_self() as *mut u8;
+        let ptr = s.add(224);
+        let ptr = ptr as *mut *mut u8;
+        let slice = crate::slice::from_raw_parts_mut(ptr, key as usize + 1);
+        let p = &slice[key as usize];
+
+        libc::printf(
+            "set t=%p key=%u value=%p\n\0".as_ptr().cast(),
+            libc::pthread_self(),
+            key,
+            value,
+        );
+
+        let r = libc::pthread_setspecific(key, value as *mut _);
+        assert_eq!(r, 0);
+        assert_eq!(*p, value);
+    };
 }
 
 #[inline]
 #[cfg(any(not(target_thread_local), test))]
 pub unsafe fn get(key: Key) -> *mut u8 {
-    unsafe { libc::pthread_getspecific(key) as *mut u8 }
+    let r = unsafe { libc::pthread_getspecific(key) as *mut u8 };
+    unsafe {
+        libc::printf("get t=%p key=%u -> %p\n\0".as_ptr().cast(), libc::pthread_self(), key, r);
+    };
+    r
 }
 
 #[inline]
 pub unsafe fn destroy(key: Key) {
+    unsafe {
+        libc::printf("destroy t=%p key=%u\n\0".as_ptr().cast(), libc::pthread_self(), key);
+    };
     let r = unsafe { libc::pthread_key_delete(key) };
     debug_assert_eq!(r, 0);
 }
